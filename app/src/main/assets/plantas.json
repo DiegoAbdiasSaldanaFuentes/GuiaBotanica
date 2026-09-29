@@ -3,7 +3,6 @@
     "id": "1",
     "nombre": "Manzano",
     "categoria": "Frutales",
-    "imagenUrl": "",
     "nivelRiego": "Medio",
     "nivelSol": "Alto",
     "descripcion": "Árbol frutal cultivado por su fruto, la manzana.",
@@ -13,26 +12,11 @@
     "trasplante": "Fines de invierno",
     "macetaPrimero": "No recomendado",
     "nombreCientifico": "Malus domestica",
-    "familia": "Rosaceae",
-    "habitat": "Climas templados, originario de Asia Central",
-    "altitud": "0 - 1500 msnm",
-    "esToxica": false
-  },
-  {
-    "id": "7",
-    "nombre": "Cicuta",
-    "categoria": "Venenosas",
-    "imagenUrl": "",
-    "nivelRiego": "Medio",
-    "nivelSol": "Medio",
-    "descripcion": "Planta herbácea altamente tóxica que ataca el sistema nervioso.",
-    "parasitosComunes": "Ninguno",
-    "tipoRaiz": "Normal",
-    "abono": "Ninguno",
-    "trasplante": "No",
-    "macetaPrimero": "No",
-    "esToxica": true,
-    "advertenciaToxicidad": "¡PELIGRO EXTREMO! Toda la planta es altamente venenosa si se ingiere. Causa parálisis respiratoria.",
-    "primerosAuxilios": "Acudir a urgencias inmediatamente. No inducir el vómito sin supervisión médica."
+    "esToxica": false,
+    "imagenPrincipal": "file:///android_asset/imagenes/Frutales/Manzano.jpg",
+    "imagenesGaleria": [
+      "file:///android_asset/imagenes/Frutales/Manzano.jpg"
+    ],
+    "urlVideo": "https://www.youtube.com/watch?v=FjU_x1106eg"
   }
 ]

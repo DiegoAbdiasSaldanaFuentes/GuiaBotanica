@@ -1,28 +1,32 @@
 package com.example.guiabotanica.screens
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.* // Importante para remember y mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.guiabotanica.components.IndicadorCard
+import com.example.guiabotanica.components.InfoTarjeta
 import com.example.guiabotanica.data.PlantaRepository
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
     val planta = PlantaRepository.obtenerPlantaPorId(plantaId)
-
-    // Aquí guardamos el estado de la interfaz. Si cambia a true, la pantalla se redibuja sola.
     var modoDetallado by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -49,22 +53,16 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // 1. Carrusel de imágenes
-                val pagerState = rememberPagerState(pageCount = { 3 })
-                HorizontalPager(
-                    state = pagerState,
+                // 1. Cabecera Principal (Lee la imagen local desde assets)
+                AsyncImage(
+                    model = planta.imagenPrincipal ?: "",
+                    contentDescription = "Imagen principal de ${planta.nombre}",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(250.dp)
-                ) { page ->
-                    AsyncImage(
-                        model = "https://picsum.photos/seed/${planta.id}$page/400/250",
-                        contentDescription = "Imagen de ${planta.nombre}",
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+                        .height(200.dp)
+                )
 
-                // 2. Advertencia de Seguridad (Solo aparece si la planta es tóxica en el JSON)
+                // 2. Advertencia de Seguridad
                 if (planta.esToxica) {
                     Card(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
@@ -104,11 +102,11 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                     Text(text = "Modo Avanzado (Botánico)", fontWeight = FontWeight.Medium)
                     Switch(
                         checked = modoDetallado,
-                        onCheckedChange = { modoDetallado = it } // Cambia el valor al presionarlo
+                        onCheckedChange = { modoDetallado = it }
                     )
                 }
 
-                // 5. Bloque de Datos Científicos (Solo visible si el interruptor está activado)
+                // 5. Bloque de Datos Científicos
                 if (modoDetallado) {
                     InfoTarjeta(titulo = "Nombre Científico", contenido = planta.nombreCientifico ?: "No registrado")
                     InfoTarjeta(titulo = "Familia", contenido = planta.familia ?: "No registrada")
@@ -123,40 +121,42 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                 InfoTarjeta(titulo = "Abono", contenido = planta.abono)
                 InfoTarjeta(titulo = "Trasplante", contenido = planta.trasplante)
                 InfoTarjeta(titulo = "¿Maceta primero?", contenido = planta.macetaPrimero)
+
+                // 7. Sección Multimedia (Video y Galería basados en el JSON)
+                Divider(modifier = Modifier.padding(vertical = 16.dp))
+                Text(text = "Tutoriales y Galería", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+
+                // Botón de Video condicional (Solo aparece si el JSON tiene un enlace válido)
+                if (!planta.urlVideo.isNullOrEmpty()) {
+                    OutlinedButton(
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(planta.urlVideo))
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Ver Video Tutorial")
+                    }
+                }
+
+                // Carrusel de Imágenes Secundarias (Galería)
+                val galeria = planta.imagenesGaleria ?: emptyList()
+                if (galeria.isNotEmpty()) {
+                    val pagerState = rememberPagerState(pageCount = { galeria.size })
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                    ) { page ->
+                        AsyncImage(
+                            model = galeria[page],
+                            contentDescription = "Galería imagen ${page + 1} de ${planta.nombre}",
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
             }
-        }
-    }
-}
-
-// Estos dos componentes idealmente irán en TarjetasUI.kt más adelante
-@Composable
-fun IndicadorCard(titulo: String, valor: String) {
-    Card(elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(text = titulo, fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
-            Text(text = valor, fontWeight = FontWeight.Bold)
-        }
-    }
-}
-
-@Composable
-fun InfoTarjeta(titulo: String, contenido: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = titulo,
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = contenido, fontSize = 16.sp)
         }
     }
 }
