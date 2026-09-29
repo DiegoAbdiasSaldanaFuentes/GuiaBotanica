@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Guia Botanica</string>
+    <string name="titulo_catalogo">Catálogo Botánico</string>
+    <string name="cat_medicinales">Medicinales</string>
+    <string name="cat_vegetales">Vegetales</string>
+    <string name="cat_frutales">Frutales</string>
+    <string name="cat_venenosas">Venenosas</string>
+    <string name="cat_aromatica">Aromática</string>
+    <string name="cat_acuatica">Acuática</string>
+    <string name="txt_volver">Volver</string>
+</resources>
