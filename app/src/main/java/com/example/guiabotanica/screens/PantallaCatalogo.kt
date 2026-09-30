@@ -2,76 +2,108 @@ package com.example.guiabotanica.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.guiabotanica.R
+import com.example.guiabotanica.data.PlantaRepository
+import com.example.guiabotanica.viewmodel.PlantaViewModel
+import com.example.guiabotanica.viewmodel.PlantaViewModelFactory
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaCatalogo(navController: NavController) {
-    // Usamos los IDs de los strings definidos en strings.xml
-    val categoriasIds = listOf(
-        R.string.cat_medicinales,
-        R.string.cat_vegetales,
-        R.string.cat_frutales,
-        R.string.cat_venenosas,
-        R.string.cat_aromatica,
-        R.string.cat_acuatica
-    )
+    val context = LocalContext.current
+    val dao = PlantaRepository.obtenerDao(context)
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Text(
-            text = stringResource(id = R.string.titulo_catalogo),
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(16.dp)
-        )
+    // Conectamos el ViewModel a esta pantalla
+    val viewModel: PlantaViewModel = viewModel(factory = PlantaViewModelFactory(dao))
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxSize()
+    var textoBusqueda by remember { mutableStateOf("") }
+    // Observamos en tiempo real los resultados que el ViewModel trae de SQLite
+    val resultadosBusqueda by viewModel.plantasFiltradas.collectAsState()
+
+    val categorias = listOf("Medicinales", "Frutales", "Vegetales", "Aromaticas", "Acuaticas", "Venenosas")
+
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("Guía Botánica", fontWeight = FontWeight.Bold) }) }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
         ) {
-            items(categoriasIds) { idStringCategoria ->
-                // Extraemos el texto real usando el ID
-                val nombreCategoria = stringResource(id = idStringCategoria)
-                CategoriaCard(nombre = nombreCategoria) {
-                    navController.navigate("lista/$nombreCategoria")
+            // Buscador
+            OutlinedTextField(
+                value = textoBusqueda,
+                onValueChange = { nuevoTexto ->
+                    textoBusqueda = nuevoTexto
+                    viewModel.buscarPlantas(nuevoTexto) // Dispara la orden SQL
+                },
+                label = { Text("Buscar planta (ej. Manzano)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Lógica de visualización
+            if (textoBusqueda.isNotBlank()) {
+                if (resultadosBusqueda.isEmpty()) {
+                    Text("No se encontraron plantas.", color = MaterialTheme.colorScheme.error)
+                } else {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(resultadosBusqueda) { planta ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .clickable { navController.navigate("detalle/${planta.id}") },
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            ) {
+                                Text(
+                                    text = planta.nombre,
+                                    modifier = Modifier.padding(16.dp),
+                                    fontSize = 18.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(categorias) { categoria ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp)
+                                .clickable { navController.navigate("lista/$categoria") },
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        ) {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text(text = categoria, fontSize = 18.sp, fontWeight = FontWeight.Medium)
+                            }
+                        }
+                    }
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun CategoriaCard(nombre: String, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(1f)
-            .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = nombre,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium
-            )
         }
     }
 }

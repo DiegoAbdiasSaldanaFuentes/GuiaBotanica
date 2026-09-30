@@ -24,14 +24,24 @@ import com.example.guiabotanica.data.PlantaRepository
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
-    val planta = PlantaRepository.obtenerPlantaPorId(plantaId)
-    var modoDetallado by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val dao = PlantaRepository.obtenerDao(context)
+    var modoDetallado by remember { mutableStateOf(false) }
+
+    // 1. Estado reactivo para la base de datos
+    var plantaState by remember { mutableStateOf<com.example.guiabotanica.model.Planta?>(null) }
+
+    // 2. Ejecutar el SELECT en segundo plano
+    LaunchedEffect(plantaId) {
+        plantaState = dao.obtenerPorId(plantaId)
+    }
+
+    val planta = plantaState
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(planta?.nombre ?: "Error") },
+                title = { Text(planta?.nombre ?: "Cargando...") },
                 navigationIcon = {
                     TextButton(onClick = { navController.popBackStack() }) {
                         Text("Atrás")
@@ -42,7 +52,7 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
     ) { paddingValues ->
         if (planta == null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Planta no encontrada.")
+                CircularProgressIndicator() // Muestra la rueda mientras SQL responde
             }
         } else {
             Column(
@@ -53,7 +63,7 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // 1. Cabecera Principal (Lee la imagen local desde assets)
+                // 1. Cabecera Principal
                 AsyncImage(
                     model = planta.imagenPrincipal ?: "",
                     contentDescription = "Imagen principal de ${planta.nombre}",
@@ -122,11 +132,10 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                 InfoTarjeta(titulo = "Trasplante", contenido = planta.trasplante)
                 InfoTarjeta(titulo = "¿Maceta primero?", contenido = planta.macetaPrimero)
 
-                // 7. Sección Multimedia (Video y Galería basados en el JSON)
+                // 7. Sección Multimedia
                 Divider(modifier = Modifier.padding(vertical = 16.dp))
                 Text(text = "Tutoriales y Galería", fontSize = 20.sp, fontWeight = FontWeight.Bold)
 
-                // Botón de Video condicional (Solo aparece si el JSON tiene un enlace válido)
                 if (!planta.urlVideo.isNullOrEmpty()) {
                     OutlinedButton(
                         onClick = {
@@ -139,7 +148,6 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                     }
                 }
 
-                // Carrusel de Imágenes Secundarias (Galería)
                 val galeria = planta.imagenesGaleria ?: emptyList()
                 if (galeria.isNotEmpty()) {
                     val pagerState = rememberPagerState(pageCount = { galeria.size })

@@ -8,17 +8,25 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.guiabotanica.screens.PantallaCatalogo
+import com.example.guiabotanica.screens.PantallaDetallePlanta
 import com.example.guiabotanica.screens.PantallaListaPlantas
 import com.example.guiabotanica.ui.theme.GuiaBotanicaTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        com.example.guiabotanica.data.PlantaRepository.inicializarDatos(this)
+
+        // Lanzamos la base de datos de forma asíncrona atada al ciclo de vida
+        lifecycleScope.launch {
+            com.example.guiabotanica.data.PlantaRepository.inicializarYMigrarDatos(this@MainActivity)
+        }
+
         setContent {
             GuiaBotanicaTheme {
                 Surface(
@@ -29,7 +37,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
     }
 }
 
@@ -47,10 +54,9 @@ fun AppNavegacion() {
             PantallaListaPlantas(categoriaSeleccionada, navController)
         }
 
-
         composable("detalle/{plantaId}") { backStackEntry ->
             val idSeleccionado = backStackEntry.arguments?.getString("plantaId") ?: ""
-            com.example.guiabotanica.screens.PantallaDetallePlanta(idSeleccionado, navController)
+            PantallaDetallePlanta(idSeleccionado, navController)
         }
     }
 }

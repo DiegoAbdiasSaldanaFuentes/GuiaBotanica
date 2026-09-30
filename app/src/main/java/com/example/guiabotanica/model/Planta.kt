@@ -1,7 +1,11 @@
 package com.example.guiabotanica.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "plantas")
 data class Planta(
-    val id: String,
+    @PrimaryKey val id: String,
     val nombre: String,
     val categoria: String,
     val nivelRiego: String,
@@ -12,17 +16,14 @@ data class Planta(
     val abono: String,
     val trasplante: String,
     val macetaPrimero: String,
-    val imagenPrincipal: String? = null,
-    val imagenesGaleria: List<String>? = null,
-    val urlVideo: String? = null,
-
     val nombreCientifico: String? = null,
     val familia: String? = null,
     val habitat: String? = null,
     val altitud: String? = null,
-
-
     val esToxica: Boolean = false,
     val advertenciaToxicidad: String? = null,
-    val primerosAuxilios: String? = null
+    val primerosAuxilios: String? = null,
+    val imagenPrincipal: String? = null,
+    val urlVideo: String? = null,
+    val imagenesGaleria: List<String>? = null
 )
