@@ -8,7 +8,7 @@ import androidx.room.TypeConverters
 import com.example.guiabotanica.model.Planta
 import com.example.guiabotanica.model.Usuario
 
-@Database(entities = [Planta::class, Usuario::class], version = 1, exportSchema = false)
+@Database(entities = [Planta::class, Usuario::class], version = 2, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 

@@ -1,6 +1,12 @@
 package com.example.guiabotanica.screens
 
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -12,11 +18,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.guiabotanica.data.PlantaRepository
 import com.example.guiabotanica.data.UserPreferences
 import com.example.guiabotanica.model.Usuario
@@ -33,11 +41,27 @@ fun PantallaPerfil(navController: NavController) {
 
     var usuarioActual by remember { mutableStateOf<Usuario?>(null) }
 
-    // Al abrir la pantalla, leemos el DataStore y luego consultamos Room
+    // Lanzador para abrir la galería del teléfono nativamente
+    val selectorDeFoto = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null && usuarioActual != null) {
+            // Android requiere permisos persistentes para leer la URI después de reiniciar la app
+            context.contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+            val usuarioActualizado = usuarioActual!!.copy(fotoUri = uri.toString())
+            usuarioActual = usuarioActualizado
+            scope.launch {
+                usuarioDao.actualizarUsuario(usuarioActualizado)
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         val correoLogueado = userPreferences.correoLogueado.firstOrNull()
         if (correoLogueado != null) {
-            // Buscamos el nombre real del usuario en la base de datos
             usuarioActual = usuarioDao.obtenerUsuarioPorCorreo(correoLogueado)
         }
     }
@@ -58,35 +82,42 @@ fun PantallaPerfil(navController: NavController) {
             modifier = Modifier.fillMaxSize().padding(paddingValues).padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Contenedor de la foto clickeable
             Box(
-                modifier = Modifier.size(120.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .clickable {
+                        selectorDeFoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Foto de perfil",
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                if (usuarioActual?.fotoUri != null) {
+                    AsyncImage(
+                        model = usuarioActual?.fotoUri,
+                        contentDescription = "Foto de perfil",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Sin foto",
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Tocar para cambiar foto", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Mostramos el nombre real o un texto de carga mientras SQL responde
-            Text(
-                text = usuarioActual?.nombre ?: "Cargando...",
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-
+            Text(text = usuarioActual?.nombre ?: "Cargando...", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = usuarioActual?.correo ?: "Cargando...",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 16.sp
-            )
+            Text(text = usuarioActual?.correo ?: "Cargando...", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 16.sp)
 
             Spacer(modifier = Modifier.height(48.dp))
 
@@ -94,9 +125,7 @@ fun PantallaPerfil(navController: NavController) {
                 onClick = {
                     scope.launch {
                         userPreferences.cerrarSesion()
-                        navController.navigate("login") {
-                            popUpTo(0) { inclusive = true }
-                        }
+                        navController.navigate("login") { popUpTo(0) { inclusive = true } }
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),

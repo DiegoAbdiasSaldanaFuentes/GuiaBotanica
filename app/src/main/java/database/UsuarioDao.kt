@@ -17,4 +17,7 @@ interface UsuarioDao {
     // Nueva consulta: Busca los datos de un usuario usando solo su correo
     @Query("SELECT * FROM usuarios WHERE correo = :correoBuscado")
     suspend fun obtenerUsuarioPorCorreo(correoBuscado: String): Usuario?
+
+    @androidx.room.Update
+    suspend fun actualizarUsuario(usuario: Usuario)
 }

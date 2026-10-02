@@ -18,14 +18,19 @@ interface PlantaDao {
     @Query("SELECT * FROM plantas WHERE nombre LIKE '%' || :query || '%' OR descripcion LIKE '%' || :query || '%'")
     suspend fun buscarPlantas(query: String): List<Planta>
 
-    // Obtener la lista de plantas marcadas como favoritas para el Perfil
+    // Obtener la lista de plantas marcadas como favoritas
     @Query("SELECT * FROM plantas WHERE esFavorita = 1")
     suspend fun obtenerFavoritas(): List<Planta>
+
+    // Busca dentro de los favoritos usando el texto ingresado
+    @Query("SELECT * FROM plantas WHERE esFavorita = 1 AND (nombre LIKE '%' || :query || '%' OR descripcion LIKE '%' || :query || '%')")
+    suspend fun buscarFavoritas(query: String): List<Planta>
 
     // Actualizar el estado de una planta (ej. cambiar a favorita)
     @Update
     suspend fun actualizarPlanta(planta: Planta)
 
+    // Cuenta cuántas plantas hay en la tabla para evitar sobreescribir datos
     @Query("SELECT COUNT(*) FROM plantas")
     suspend fun contarPlantas(): Int
 

@@ -139,6 +139,10 @@ fun PantallaRegistro(navController: NavController) {
                         if (resultado == -1L) {
                             mensajeError = "Este correo ya está registrado"
                         } else {
+                            // Guardar la sesión físicamente en el dispositivo
+                            val userPreferences = com.example.guiabotanica.data.UserPreferences(context)
+                            userPreferences.guardarSesion(nuevoUsuario.correo)
+
                             // Registro exitoso, vamos al catálogo destruyendo el historial de login
                             navController.navigate("catalogo") {
                                 popUpTo("login") { inclusive = true }

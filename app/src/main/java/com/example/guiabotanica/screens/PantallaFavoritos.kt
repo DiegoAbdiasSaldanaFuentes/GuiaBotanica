@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.guiabotanica.data.PlantaRepository
 import com.example.guiabotanica.model.Planta
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,9 +28,16 @@ fun PantallaFavoritos(navController: NavController) {
     val dao = PlantaRepository.obtenerDao(context)
 
     var plantasFavoritas by remember { mutableStateOf<List<Planta>>(emptyList()) }
+    var textoBusqueda by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
-        plantasFavoritas = dao.obtenerFavoritas()
+    // Ejecuta la búsqueda inicial o reactiva cuando cambie textoBusqueda
+    LaunchedEffect(textoBusqueda) {
+        delay(300) // Debounce para no saturar SQLite
+        plantasFavoritas = if (textoBusqueda.isBlank()) {
+            dao.obtenerFavoritas()
+        } else {
+            dao.buscarFavoritas(textoBusqueda)
+        }
     }
 
     Scaffold(
@@ -44,17 +53,24 @@ fun PantallaFavoritos(navController: NavController) {
         }
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
+            modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)
         ) {
+            OutlinedTextField(
+                value = textoBusqueda,
+                onValueChange = { textoBusqueda = it },
+                label = { Text("Buscar en favoritos...") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             if (plantasFavoritas.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No tienes plantas marcadas como favoritas aún.")
+                Box(modifier = Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
+                    Text("No se encontraron resultados.")
                 }
             } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(modifier = Modifier.fillMaxSize().weight(1f)) {
                     items(plantasFavoritas) { planta ->
                         Card(
                             modifier = Modifier
@@ -64,18 +80,12 @@ fun PantallaFavoritos(navController: NavController) {
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(text = planta.nombre, fontSize = 18.sp)
-                                Icon(
-                                    imageVector = Icons.Default.Favorite,
-                                    contentDescription = "Favorita",
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
+                                Icon(Icons.Default.Favorite, contentDescription = "Favorita", tint = MaterialTheme.colorScheme.primary)
                             }
                         }
                     }
