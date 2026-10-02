@@ -5,14 +5,22 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
 class Converters {
+
+    private val gson = Gson()
+
+    // Convierte el texto guardado en SQLite de vuelta a una Lista de Kotlin
     @TypeConverter
-    fun fromStringList(value: List<String>?): String {
-        return Gson().toJson(value)
+    fun deStringALista(data: String?): List<String>? {
+        if (data == null) {
+            return emptyList()
+        }
+        val listType = object : TypeToken<List<String>>() {}.type
+        return gson.fromJson(data, listType)
     }
 
+    // Convierte la Lista de Kotlin a un texto JSON para poder guardarlo en SQLite
     @TypeConverter
-    fun toStringList(value: String): List<String>? {
-        val listType = object : TypeToken<List<String>>() {}.type
-        return Gson().fromJson(value, listType)
+    fun deListaAString(lista: List<String>?): String {
+        return gson.toJson(lista)
     }
 }

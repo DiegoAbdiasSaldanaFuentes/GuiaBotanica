@@ -12,33 +12,30 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class PlantaViewModel(private val plantaDao: PlantaDao) : ViewModel() {
+class PlantaViewModel(private val dao: PlantaDao) : ViewModel() {
 
-    // Estado que observará la interfaz (la lista de plantas que coinciden con la búsqueda)
     private val _plantasFiltradas = MutableStateFlow<List<Planta>>(emptyList())
     val plantasFiltradas: StateFlow<List<Planta>> = _plantasFiltradas.asStateFlow()
 
-    private var trabajoDeBusqueda: Job? = null
+    private var trabajoBusqueda: Job? = null
 
     fun buscarPlantas(query: String) {
-        // Si el usuario sigue tecleando rápido, cancelamos la búsqueda anterior
-        trabajoDeBusqueda?.cancel()
+        // Cancela la búsqueda anterior si el usuario sigue escribiendo
+        trabajoBusqueda?.cancel()
 
         if (query.isBlank()) {
             _plantasFiltradas.value = emptyList()
             return
         }
 
-        // Lanzamos la consulta SQL en segundo plano con un pequeño retraso (Debounce)
-        trabajoDeBusqueda = viewModelScope.launch {
-            delay(300)
-            val resultados = plantaDao.buscarPlantas(query)
-            _plantasFiltradas.value = resultados
+        trabajoBusqueda = viewModelScope.launch {
+            delay(300) // Debounce de 300 milisegundos
+            _plantasFiltradas.value = dao.buscarPlantas(query)
         }
     }
 }
 
-// Factory para poder instanciar el ViewModel pasándole el acceso a la base de datos (DAO)
+// Factory necesario para pasarle el DAO al ViewModel en Jetpack Compose
 class PlantaViewModelFactory(private val dao: PlantaDao) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(PlantaViewModel::class.java)) {

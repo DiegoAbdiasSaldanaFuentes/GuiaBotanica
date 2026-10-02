@@ -2,6 +2,7 @@ package com.example.guiabotanica.screens
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -10,10 +11,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -25,12 +29,24 @@ import com.example.guiabotanica.components.InfoTarjeta
 import com.example.guiabotanica.data.PlantaRepository
 import kotlinx.coroutines.launch
 
+// Función auxiliar para extraer el ID de un video de YouTube
+fun extraerIdVideoYoutube(url: String?): String? {
+    if (url.isNullOrEmpty()) return null
+    return if (url.contains("v=")) {
+        url.substringAfter("v=").substringBefore("&")
+    } else if (url.contains("youtu.be/")) {
+        url.substringAfter("youtu.be/").substringBefore("?")
+    } else {
+        null
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
     val context = LocalContext.current
     val dao = PlantaRepository.obtenerDao(context)
-    val scope = rememberCoroutineScope() // Necesario para ejecutar operaciones SQL al presionar botones
+    val scope = rememberCoroutineScope()
 
     var modoDetallado by remember { mutableStateOf(false) }
     var plantaState by remember { mutableStateOf<com.example.guiabotanica.model.Planta?>(null) }
@@ -51,14 +67,13 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                     }
                 },
                 actions = {
-                    // Botón para agregar/quitar de favoritos
                     planta?.let { p ->
                         IconButton(onClick = {
                             val nuevoEstado = !p.esFavorita
                             val plantaActualizada = p.copy(esFavorita = nuevoEstado)
                             scope.launch {
-                                dao.actualizarPlanta(plantaActualizada) // Guarda en SQLite
-                                plantaState = plantaActualizada // Actualiza la UI instantáneamente
+                                dao.actualizarPlanta(plantaActualizada)
+                                plantaState = plantaActualizada
                             }
                         }) {
                             Icon(
@@ -90,7 +105,8 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                     contentDescription = "Imagen principal de ${planta.nombre}",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
+                        .height(200.dp),
+                    contentScale = ContentScale.Crop
                 )
 
                 if (planta.esToxica) {
@@ -151,15 +167,34 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                 HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
                 Text(text = "Tutoriales y Galería", fontSize = 20.sp, fontWeight = FontWeight.Bold)
 
-                if (!planta.urlVideo.isNullOrEmpty()) {
-                    OutlinedButton(
-                        onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(planta.urlVideo))
-                            context.startActivity(intent)
-                        },
-                        modifier = Modifier.fillMaxWidth()
+                // Lógica de miniatura de YouTube en lugar del botón simple
+                val videoId = extraerIdVideoYoutube(planta.urlVideo)
+                if (videoId != null) {
+                    val urlMiniatura = "https://img.youtube.com/vi/$videoId/hqdefault.jpg"
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clickable {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(planta.urlVideo))
+                                context.startActivity(intent)
+                            },
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text("Ver Video Tutorial")
+                        AsyncImage(
+                            model = urlMiniatura,
+                            contentDescription = "Miniatura del video",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                        // Icono de play encima de la miniatura
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Reproducir",
+                            modifier = Modifier.size(64.dp),
+                            tint = Color.White
+                        )
                     }
                 }
 
@@ -175,7 +210,8 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                         AsyncImage(
                             model = galeria[page],
                             contentDescription = "Galería imagen ${page + 1} de ${planta.nombre}",
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
                         )
                     }
                 }

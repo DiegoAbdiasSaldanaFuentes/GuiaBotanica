@@ -43,18 +43,16 @@ fun PantallaCatalogo(navController: NavController) {
             BottomAppBar(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Distribuye los elementos equitativamente en todo el ancho
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Lado Izquierdo
-                    IconButton(onClick = { /* Espacio reservado */ }) {
+                    // Botón de Favoritos enlazado
+                    IconButton(onClick = { navController.navigate("favoritos") }) {
                         Icon(imageVector = Icons.Default.Star, contentDescription = "Destacadas")
                     }
 
-                    // Centro
                     FloatingActionButton(
                         onClick = { navController.navigate("perfil") },
                         containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
@@ -63,8 +61,8 @@ fun PantallaCatalogo(navController: NavController) {
                         Icon(imageVector = Icons.Default.Person, contentDescription = "Perfil del Usuario")
                     }
 
-                    // Lado Derecho
-                    IconButton(onClick = { /* Espacio reservado */ }) {
+                    // Botón de Ajustes enlazado
+                    IconButton(onClick = { navController.navigate("ajustes") }) {
                         Icon(imageVector = Icons.Default.Settings, contentDescription = "Ajustes")
                     }
                 }

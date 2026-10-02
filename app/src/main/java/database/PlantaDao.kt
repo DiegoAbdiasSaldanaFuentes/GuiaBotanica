@@ -26,6 +26,9 @@ interface PlantaDao {
     @Update
     suspend fun actualizarPlanta(planta: Planta)
 
+    @Query("SELECT COUNT(*) FROM plantas")
+    suspend fun contarPlantas(): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarTodas(plantas: List<Planta>)
 }
