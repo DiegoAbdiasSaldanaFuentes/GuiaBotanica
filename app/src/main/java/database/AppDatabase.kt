@@ -9,7 +9,7 @@ import com.example.guiabotanica.model.Planta
 import androidx.room.TypeConverters
 import com.example.guiabotanica.database.Converters
 
-@Database(entities = [Planta::class], version = 1, exportSchema = false)
+@Database(entities = [Planta::class], version = 2, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
@@ -25,7 +25,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "guia_botanica_db"
-                ).build()
+                )
+                .fallbackToDestructiveMigration()
+                .build()
                 INSTANCE = instance
                 instance
             }

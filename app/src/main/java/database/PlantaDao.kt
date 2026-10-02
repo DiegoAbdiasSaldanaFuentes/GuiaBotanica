@@ -4,24 +4,28 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.example.guiabotanica.model.Planta
 
 @Dao
 interface PlantaDao {
-
-    // Consulta SQL pura para obtener plantas por categoría
     @Query("SELECT * FROM plantas WHERE categoria = :categoriaBuscada")
     suspend fun obtenerPorCategoria(categoriaBuscada: String): List<Planta>
 
-    // Consulta SQL pura para buscar una planta por ID
     @Query("SELECT * FROM plantas WHERE id = :idBuscado")
     suspend fun obtenerPorId(idBuscado: String): Planta?
 
-    // Sentencia SQL para la búsqueda en tiempo real (que implementaremos en el siguiente paso)
     @Query("SELECT * FROM plantas WHERE nombre LIKE '%' || :query || '%' OR descripcion LIKE '%' || :query || '%'")
     suspend fun buscarPlantas(query: String): List<Planta>
 
-    // Inserción masiva o unitaria (reemplaza si ya existe el ID)
+    // Obtener la lista de plantas marcadas como favoritas para el Perfil
+    @Query("SELECT * FROM plantas WHERE esFavorita = 1")
+    suspend fun obtenerFavoritas(): List<Planta>
+
+    // Actualizar el estado de una planta (ej. cambiar a favorita)
+    @Update
+    suspend fun actualizarPlanta(planta: Planta)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarTodas(plantas: List<Planta>)
 }

@@ -7,6 +7,10 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,18 +30,46 @@ import com.example.guiabotanica.viewmodel.PlantaViewModelFactory
 fun PantallaCatalogo(navController: NavController) {
     val context = LocalContext.current
     val dao = PlantaRepository.obtenerDao(context)
-
-    // Conectamos el ViewModel a esta pantalla
     val viewModel: PlantaViewModel = viewModel(factory = PlantaViewModelFactory(dao))
 
     var textoBusqueda by remember { mutableStateOf("") }
-    // Observamos en tiempo real los resultados que el ViewModel trae de SQLite
     val resultadosBusqueda by viewModel.plantasFiltradas.collectAsState()
 
     val categorias = listOf("Medicinales", "Frutales", "Vegetales", "Aromaticas", "Acuaticas", "Venenosas")
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Guía Botánica", fontWeight = FontWeight.Bold) }) }
+        topBar = { TopAppBar(title = { Text("Guía Botánica", fontWeight = FontWeight.Bold) }) },
+        bottomBar = {
+            BottomAppBar(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Distribuye los elementos equitativamente en todo el ancho
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Lado Izquierdo
+                    IconButton(onClick = { /* Espacio reservado */ }) {
+                        Icon(imageVector = Icons.Default.Star, contentDescription = "Destacadas")
+                    }
+
+                    // Centro
+                    FloatingActionButton(
+                        onClick = { navController.navigate("perfil") },
+                        containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
+                        elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
+                    ) {
+                        Icon(imageVector = Icons.Default.Person, contentDescription = "Perfil del Usuario")
+                    }
+
+                    // Lado Derecho
+                    IconButton(onClick = { /* Espacio reservado */ }) {
+                        Icon(imageVector = Icons.Default.Settings, contentDescription = "Ajustes")
+                    }
+                }
+            }
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -45,12 +77,11 @@ fun PantallaCatalogo(navController: NavController) {
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            // Buscador
             OutlinedTextField(
                 value = textoBusqueda,
                 onValueChange = { nuevoTexto ->
                     textoBusqueda = nuevoTexto
-                    viewModel.buscarPlantas(nuevoTexto) // Dispara la orden SQL
+                    viewModel.buscarPlantas(nuevoTexto)
                 },
                 label = { Text("Buscar planta (ej. Manzano)") },
                 modifier = Modifier.fillMaxWidth(),
@@ -59,7 +90,6 @@ fun PantallaCatalogo(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Lógica de visualización
             if (textoBusqueda.isNotBlank()) {
                 if (resultadosBusqueda.isEmpty()) {
                     Text("No se encontraron plantas.", color = MaterialTheme.colorScheme.error)

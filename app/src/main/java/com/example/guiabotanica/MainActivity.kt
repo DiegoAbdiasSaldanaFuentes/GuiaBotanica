@@ -15,6 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.guiabotanica.screens.PantallaCatalogo
 import com.example.guiabotanica.screens.PantallaDetallePlanta
 import com.example.guiabotanica.screens.PantallaListaPlantas
+import com.example.guiabotanica.screens.PantallaPerfil
 import com.example.guiabotanica.ui.theme.GuiaBotanicaTheme
 import kotlinx.coroutines.launch
 
@@ -22,7 +23,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Lanzamos la base de datos de forma asíncrona atada al ciclo de vida
         lifecycleScope.launch {
             com.example.guiabotanica.data.PlantaRepository.inicializarYMigrarDatos(this@MainActivity)
         }
@@ -57,6 +57,11 @@ fun AppNavegacion() {
         composable("detalle/{plantaId}") { backStackEntry ->
             val idSeleccionado = backStackEntry.arguments?.getString("plantaId") ?: ""
             PantallaDetallePlanta(idSeleccionado, navController)
+        }
+
+        // Nueva ruta para evitar crasheos al apretar el botón inferior
+        composable("perfil") {
+            PantallaPerfil(navController)
         }
     }
 }

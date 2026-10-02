@@ -16,14 +16,15 @@ data class Planta(
     val abono: String,
     val trasplante: String,
     val macetaPrimero: String,
-    val nombreCientifico: String? = null,
-    val familia: String? = null,
-    val habitat: String? = null,
-    val altitud: String? = null,
-    val esToxica: Boolean = false,
+    val nombreCientifico: String?,
+    val familia: String?,
+    val habitat: String?,
+    val altitud: String?,
+    val esToxica: Boolean,
     val advertenciaToxicidad: String? = null,
     val primerosAuxilios: String? = null,
-    val imagenPrincipal: String? = null,
-    val urlVideo: String? = null,
-    val imagenesGaleria: List<String>? = null
+    val imagenPrincipal: String?,
+    val imagenesGaleria: List<String>?,
+    val urlVideo: String?,
+    var esFavorita: Boolean = false // Nueva columna para manejar el perfil
 )

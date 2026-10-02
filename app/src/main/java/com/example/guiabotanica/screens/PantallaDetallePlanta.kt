@@ -7,6 +7,9 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,18 +23,18 @@ import coil.compose.AsyncImage
 import com.example.guiabotanica.components.IndicadorCard
 import com.example.guiabotanica.components.InfoTarjeta
 import com.example.guiabotanica.data.PlantaRepository
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
     val context = LocalContext.current
     val dao = PlantaRepository.obtenerDao(context)
-    var modoDetallado by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope() // Necesario para ejecutar operaciones SQL al presionar botones
 
-    // 1. Estado reactivo para la base de datos
+    var modoDetallado by remember { mutableStateOf(false) }
     var plantaState by remember { mutableStateOf<com.example.guiabotanica.model.Planta?>(null) }
 
-    // 2. Ejecutar el SELECT en segundo plano
     LaunchedEffect(plantaId) {
         plantaState = dao.obtenerPorId(plantaId)
     }
@@ -46,13 +49,32 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                     TextButton(onClick = { navController.popBackStack() }) {
                         Text("Atrás")
                     }
+                },
+                actions = {
+                    // Botón para agregar/quitar de favoritos
+                    planta?.let { p ->
+                        IconButton(onClick = {
+                            val nuevoEstado = !p.esFavorita
+                            val plantaActualizada = p.copy(esFavorita = nuevoEstado)
+                            scope.launch {
+                                dao.actualizarPlanta(plantaActualizada) // Guarda en SQLite
+                                plantaState = plantaActualizada // Actualiza la UI instantáneamente
+                            }
+                        }) {
+                            Icon(
+                                imageVector = if (p.esFavorita) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = "Marcar como favorita",
+                                tint = if (p.esFavorita) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
                 }
             )
         }
     ) { paddingValues ->
         if (planta == null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator() // Muestra la rueda mientras SQL responde
+                CircularProgressIndicator()
             }
         } else {
             Column(
@@ -63,7 +85,6 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // 1. Cabecera Principal
                 AsyncImage(
                     model = planta.imagenPrincipal ?: "",
                     contentDescription = "Imagen principal de ${planta.nombre}",
@@ -72,7 +93,6 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                         .height(200.dp)
                 )
 
-                // 2. Advertencia de Seguridad
                 if (planta.esToxica) {
                     Card(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
@@ -94,7 +114,6 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                     }
                 }
 
-                // 3. Indicadores Básicos
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -103,7 +122,6 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                     IndicadorCard(titulo = "Sol", valor = planta.nivelSol)
                 }
 
-                // 4. Interruptor de Modo Detallado
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -116,7 +134,6 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                     )
                 }
 
-                // 5. Bloque de Datos Científicos
                 if (modoDetallado) {
                     InfoTarjeta(titulo = "Nombre Científico", contenido = planta.nombreCientifico ?: "No registrado")
                     InfoTarjeta(titulo = "Familia", contenido = planta.familia ?: "No registrada")
@@ -124,7 +141,6 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                     InfoTarjeta(titulo = "Altitud", contenido = planta.altitud ?: "No registrada")
                 }
 
-                // 6. Tarjetas Estándar
                 InfoTarjeta(titulo = "Descripción", contenido = planta.descripcion)
                 InfoTarjeta(titulo = "Parásitos Comunes", contenido = planta.parasitosComunes)
                 InfoTarjeta(titulo = "Tipo de Raíz", contenido = planta.tipoRaiz)
@@ -132,8 +148,7 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                 InfoTarjeta(titulo = "Trasplante", contenido = planta.trasplante)
                 InfoTarjeta(titulo = "¿Maceta primero?", contenido = planta.macetaPrimero)
 
-                // 7. Sección Multimedia
-                Divider(modifier = Modifier.padding(vertical = 16.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
                 Text(text = "Tutoriales y Galería", fontSize = 20.sp, fontWeight = FontWeight.Bold)
 
                 if (!planta.urlVideo.isNullOrEmpty()) {
