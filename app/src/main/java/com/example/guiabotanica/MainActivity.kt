@@ -46,10 +46,8 @@ fun AppNavegacion() {
     val context = LocalContext.current
     val userPreferences = UserPreferences(context)
 
-    // Escuchamos el estado del DataStore
     val correoLogueado by userPreferences.correoLogueado.collectAsState(initial = null)
 
-    // Definimos el destino inicial en base a si el correo existe o no
     val startDestination = if (correoLogueado == null) "login" else "catalogo"
 
     NavHost(navController = navController, startDestination = startDestination) {

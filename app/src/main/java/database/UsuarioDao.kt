@@ -14,7 +14,7 @@ interface UsuarioDao {
     @Query("SELECT * FROM usuarios WHERE correo = :correoBuscado AND contrasena = :contrasenaBuscada")
     suspend fun login(correoBuscado: String, contrasenaBuscada: String): Usuario?
 
-    // Nueva consulta: Busca los datos de un usuario usando solo su correo
+
     @Query("SELECT * FROM usuarios WHERE correo = :correoBuscado")
     suspend fun obtenerUsuarioPorCorreo(correoBuscado: String): Usuario?
 

@@ -35,7 +35,7 @@ class PlantaViewModel(private val dao: PlantaDao) : ViewModel() {
     }
 }
 
-// Factory necesario para pasarle el DAO al ViewModel en Jetpack Compose
+
 class PlantaViewModelFactory(private val dao: PlantaDao) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(PlantaViewModel::class.java)) {
