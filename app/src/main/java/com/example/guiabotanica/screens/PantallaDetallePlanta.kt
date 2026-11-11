@@ -27,9 +27,11 @@ import coil.compose.AsyncImage
 import com.example.guiabotanica.components.IndicadorCard
 import com.example.guiabotanica.components.InfoTarjeta
 import com.example.guiabotanica.data.PlantaRepository
+import com.example.guiabotanica.data.UserPreferences
+import com.example.guiabotanica.model.PlantaFavorita
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
-// Función auxiliar para extraer el ID de un video de YouTube
 fun extraerIdVideoYoutube(url: String?): String? {
     if (url.isNullOrEmpty()) return null
     return if (url.contains("v=")) {
@@ -46,13 +48,21 @@ fun extraerIdVideoYoutube(url: String?): String? {
 fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
     val context = LocalContext.current
     val dao = PlantaRepository.obtenerDao(context)
+    val favoritoDao = PlantaRepository.obtenerFavoritoDao(context)
+    val userPreferences = UserPreferences(context)
     val scope = rememberCoroutineScope()
 
     var modoDetallado by remember { mutableStateOf(false) }
     var plantaState by remember { mutableStateOf<com.example.guiabotanica.model.Planta?>(null) }
+    var esFavorita by remember { mutableStateOf(false) }
 
-    LaunchedEffect(plantaId) {
+    val correoLogueado by userPreferences.correoLogueado.collectAsState(initial = null)
+
+    LaunchedEffect(plantaId, correoLogueado) {
         plantaState = dao.obtenerPorId(plantaId)
+        correoLogueado?.let { correo ->
+            esFavorita = favoritoDao.esFavorita(correo, plantaId)
+        }
     }
 
     val planta = plantaState
@@ -67,19 +77,22 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                     }
                 },
                 actions = {
-                    planta?.let { p ->
+                    if (planta != null && correoLogueado != null) {
                         IconButton(onClick = {
-                            val nuevoEstado = !p.esFavorita
-                            val plantaActualizada = p.copy(esFavorita = nuevoEstado)
                             scope.launch {
-                                dao.actualizarPlanta(plantaActualizada)
-                                plantaState = plantaActualizada
+                                val fav = PlantaFavorita(correoLogueado!!, planta.id)
+                                if (esFavorita) {
+                                    favoritoDao.eliminarFavorito(fav)
+                                } else {
+                                    favoritoDao.agregarFavorito(fav)
+                                }
+                                esFavorita = !esFavorita
                             }
                         }) {
                             Icon(
-                                imageVector = if (p.esFavorita) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                imageVector = if (esFavorita) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                                 contentDescription = "Marcar como favorita",
-                                tint = if (p.esFavorita) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                tint = if (esFavorita) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -157,17 +170,28 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                     InfoTarjeta(titulo = "Altitud", contenido = planta.altitud ?: "No registrada")
                 }
 
-                InfoTarjeta(titulo = "Descripción", contenido = planta.descripcion)
-                InfoTarjeta(titulo = "Parásitos Comunes", contenido = planta.parasitosComunes)
-                InfoTarjeta(titulo = "Tipo de Raíz", contenido = planta.tipoRaiz)
-                InfoTarjeta(titulo = "Abono", contenido = planta.abono)
-                InfoTarjeta(titulo = "Trasplante", contenido = planta.trasplante)
-                InfoTarjeta(titulo = "¿Maceta primero?", contenido = planta.macetaPrimero)
+                if (planta.descripcion.isNotBlank()) {
+                    InfoTarjeta(titulo = "Descripción", contenido = planta.descripcion)
+                }
+                if (planta.parasitosComunes.isNotBlank()) {
+                    InfoTarjeta(titulo = "Parásitos Comunes", contenido = planta.parasitosComunes)
+                }
+                if (planta.tipoRaiz.isNotBlank()) {
+                    InfoTarjeta(titulo = "Tipo de Raíz", contenido = planta.tipoRaiz)
+                }
+                if (planta.abono.isNotBlank()) {
+                    InfoTarjeta(titulo = "Abono", contenido = planta.abono)
+                }
+                if (planta.trasplante.isNotBlank()) {
+                    InfoTarjeta(titulo = "Trasplante", contenido = planta.trasplante)
+                }
+                if (planta.macetaPrimero.isNotBlank()) {
+                    InfoTarjeta(titulo = "¿Maceta primero?", contenido = planta.macetaPrimero)
+                }
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
                 Text(text = "Tutoriales y Galería", fontSize = 20.sp, fontWeight = FontWeight.Bold)
 
-                // Lógica de miniatura de YouTube en lugar del botón simple
                 val videoId = extraerIdVideoYoutube(planta.urlVideo)
                 if (videoId != null) {
                     val urlMiniatura = "https://img.youtube.com/vi/$videoId/hqdefault.jpg"
@@ -188,7 +212,6 @@ fun PantallaDetallePlanta(plantaId: String, navController: NavController) {
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
                         )
-                        // Icono de play encima de la miniatura
                         Icon(
                             imageVector = Icons.Default.PlayArrow,
                             contentDescription = "Reproducir",

@@ -68,5 +68,6 @@ fun AppNavegacion() {
         composable("perfil") { PantallaPerfil(navController) }
         composable("favoritos") { PantallaFavoritos(navController) }
         composable("ajustes") { PantallaAjustes(navController) }
+        composable("clima") { PantallaClima(navController) }
     }
 }

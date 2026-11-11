@@ -25,6 +25,5 @@ data class Planta(
     val primerosAuxilios: String? = null,
     val imagenPrincipal: String?,
     val imagenesGaleria: List<String>?,
-    val urlVideo: String?,
-    var esFavorita: Boolean = false // Nueva columna para manejar el perfil
+    val urlVideo: String?
 )

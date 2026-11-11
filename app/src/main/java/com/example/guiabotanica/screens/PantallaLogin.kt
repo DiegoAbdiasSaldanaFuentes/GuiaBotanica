@@ -75,7 +75,6 @@ fun PantallaLogin(navController: NavController) {
                 scope.launch {
                     val usuarioLogueado = usuarioDao.login(correo.trim(), contrasena)
                     if (usuarioLogueado != null) {
-                        // Guardar la sesión físicamente en el dispositivo
                         userPreferences.guardarSesion(usuarioLogueado.correo)
 
                         navController.navigate("catalogo") {

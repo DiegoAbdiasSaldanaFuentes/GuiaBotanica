@@ -2,6 +2,7 @@ package com.example.guiabotanica.data
 
 import android.content.Context
 import com.example.guiabotanica.database.AppDatabase
+import com.example.guiabotanica.database.FavoritoDao
 import com.example.guiabotanica.database.PlantaDao
 import com.example.guiabotanica.database.UsuarioDao
 import com.example.guiabotanica.model.Planta
@@ -19,10 +20,13 @@ object PlantaRepository {
         return AppDatabase.obtenerInstancia(context).usuarioDao()
     }
 
+    fun obtenerFavoritoDao(context: Context): FavoritoDao {
+        return AppDatabase.obtenerInstancia(context).favoritoDao()
+    }
+
     suspend fun inicializarYMigrarDatos(context: Context) {
         val dao = obtenerDao(context)
         try {
-            // Verifica si la tabla ya tiene datos. Si tiene, cancela la inserción masiva.
             if (dao.contarPlantas() > 0) {
                 return
             }

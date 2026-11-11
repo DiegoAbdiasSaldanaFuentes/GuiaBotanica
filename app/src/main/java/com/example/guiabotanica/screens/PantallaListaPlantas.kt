@@ -23,21 +23,27 @@ fun PantallaListaPlantas(categoria: String, navController: NavController) {
     val context = LocalContext.current
     val dao = PlantaRepository.obtenerDao(context)
 
-    // Estado para almacenar los datos que llegan de SQL
     var plantas by remember { mutableStateOf<List<Planta>>(emptyList()) }
 
-    // Dispara la consulta a la base de datos al abrir la pantalla
+    var isLoading by remember { mutableStateOf(true) }
+
     LaunchedEffect(categoria) {
+        isLoading = true
         plantas = dao.obtenerPorCategoria(categoria)
+        isLoading = false
     }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Categoría: $categoria", fontWeight = FontWeight.Bold) }) }
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
-            if (plantas.isEmpty()) {
+            if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
+                }
+            } else if (plantas.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No hay plantas registradas en esta categoría.")
                 }
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {

@@ -24,6 +24,7 @@ import androidx.navigation.NavController
 import com.example.guiabotanica.data.PlantaRepository
 import com.example.guiabotanica.viewmodel.PlantaViewModel
 import com.example.guiabotanica.viewmodel.PlantaViewModelFactory
+import androidx.compose.material.icons.filled.Cloud
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +36,11 @@ fun PantallaCatalogo(navController: NavController) {
     var textoBusqueda by remember { mutableStateOf("") }
     val resultadosBusqueda by viewModel.plantasFiltradas.collectAsState()
 
-    val categorias = listOf("Medicinales", "Frutales", "Vegetales", "Aromaticas", "Acuaticas", "Venenosas")
+    var categorias by remember { mutableStateOf<List<String>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        categorias = dao.obtenerCategoriasUnicas()
+    }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Guía Botánica", fontWeight = FontWeight.Bold) }) },
@@ -48,7 +53,6 @@ fun PantallaCatalogo(navController: NavController) {
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Botón de Favoritos enlazado
                     IconButton(onClick = { navController.navigate("favoritos") }) {
                         Icon(imageVector = Icons.Default.Star, contentDescription = "Destacadas")
                     }
@@ -61,9 +65,11 @@ fun PantallaCatalogo(navController: NavController) {
                         Icon(imageVector = Icons.Default.Person, contentDescription = "Perfil del Usuario")
                     }
 
-                    // Botón de Ajustes enlazado
                     IconButton(onClick = { navController.navigate("ajustes") }) {
                         Icon(imageVector = Icons.Default.Settings, contentDescription = "Ajustes")
+                    }
+                    IconButton(onClick = { navController.navigate("clima") }) {
+                        Icon(imageVector = Icons.Default.Cloud, contentDescription = "Consultar Clima")
                     }
                 }
             }
@@ -111,22 +117,28 @@ fun PantallaCatalogo(navController: NavController) {
                     }
                 }
             } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(categorias) { categoria ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(100.dp)
-                                .clickable { navController.navigate("lista/$categoria") },
-                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                        ) {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text(text = categoria, fontSize = 18.sp, fontWeight = FontWeight.Medium)
+                if (categorias.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(categorias) { categoria ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(100.dp)
+                                    .clickable { navController.navigate("lista/$categoria") },
+                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                            ) {
+                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Text(text = categoria, fontSize = 18.sp, fontWeight = FontWeight.Medium)
+                                }
                             }
                         }
                     }

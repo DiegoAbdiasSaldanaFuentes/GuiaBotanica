@@ -20,7 +20,6 @@ class PlantaViewModel(private val dao: PlantaDao) : ViewModel() {
     private var trabajoBusqueda: Job? = null
 
     fun buscarPlantas(query: String) {
-        // Cancela la búsqueda anterior si el usuario sigue escribiendo
         trabajoBusqueda?.cancel()
 
         if (query.isBlank()) {
@@ -29,7 +28,7 @@ class PlantaViewModel(private val dao: PlantaDao) : ViewModel() {
         }
 
         trabajoBusqueda = viewModelScope.launch {
-            delay(300) // Debounce de 300 milisegundos
+            delay(300)
             _plantasFiltradas.value = dao.buscarPlantas(query)
         }
     }

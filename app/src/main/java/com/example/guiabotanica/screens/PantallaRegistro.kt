@@ -32,7 +32,6 @@ fun PantallaRegistro(navController: NavController) {
     var contrasena by remember { mutableStateOf("") }
     var confirmarContrasena by remember { mutableStateOf("") }
 
-    // Estado para manejar mensajes de error en pantalla
     var mensajeError by remember { mutableStateOf("") }
 
     Scaffold(
@@ -117,7 +116,6 @@ fun PantallaRegistro(navController: NavController) {
 
             Button(
                 onClick = {
-                    // Validaciones de negocio
                     if (nombre.isBlank() || correo.isBlank() || contrasena.isBlank()) {
                         mensajeError = "Todos los campos son obligatorios"
                         return@Button
@@ -131,7 +129,6 @@ fun PantallaRegistro(navController: NavController) {
                         return@Button
                     }
 
-                    // Petición a la base de datos
                     scope.launch {
                         val nuevoUsuario = Usuario(correo.trim(), nombre.trim(), contrasena)
                         val resultado = usuarioDao.registrarUsuario(nuevoUsuario)
@@ -139,11 +136,9 @@ fun PantallaRegistro(navController: NavController) {
                         if (resultado == -1L) {
                             mensajeError = "Este correo ya está registrado"
                         } else {
-                            // Guardar la sesión físicamente en el dispositivo
                             val userPreferences = com.example.guiabotanica.data.UserPreferences(context)
                             userPreferences.guardarSesion(nuevoUsuario.correo)
 
-                            // Registro exitoso, vamos al catálogo destruyendo el historial de login
                             navController.navigate("catalogo") {
                                 popUpTo("login") { inclusive = true }
                             }

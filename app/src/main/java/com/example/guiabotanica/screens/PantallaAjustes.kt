@@ -62,7 +62,6 @@ fun PantallaAjustes(navController: NavController) {
     }
 }
 
-// Estos dos componentes auxiliares se mantienen igual al código anterior
 @Composable
 fun ListItemAjustesSwitch(titulo: String, subtitulo: String, icono: ImageVector, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {

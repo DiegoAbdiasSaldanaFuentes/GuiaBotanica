@@ -41,16 +41,19 @@ fun PantallaPerfil(navController: NavController) {
 
     var usuarioActual by remember { mutableStateOf<Usuario?>(null) }
 
-    // Lanzador para abrir la galería del teléfono nativamente
     val selectorDeFoto = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         if (uri != null && usuarioActual != null) {
-            // Android requiere permisos persistentes para leer la URI después de reiniciar la app
-            context.contentResolver.takePersistableUriPermission(
-                uri,
-                Intent.FLAG_GRANT_READ_URI_PERMISSION
-            )
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (e: SecurityException) {
+                e.printStackTrace()
+            }
+            
             val usuarioActualizado = usuarioActual!!.copy(fotoUri = uri.toString())
             usuarioActual = usuarioActualizado
             scope.launch {
@@ -82,7 +85,6 @@ fun PantallaPerfil(navController: NavController) {
             modifier = Modifier.fillMaxSize().padding(paddingValues).padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Contenedor de la foto clickeable
             Box(
                 modifier = Modifier
                     .size(120.dp)

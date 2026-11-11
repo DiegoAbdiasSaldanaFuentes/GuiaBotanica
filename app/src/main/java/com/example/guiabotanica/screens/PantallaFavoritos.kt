@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.guiabotanica.data.PlantaRepository
+import com.example.guiabotanica.data.UserPreferences
 import com.example.guiabotanica.model.Planta
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -25,18 +26,22 @@ import kotlinx.coroutines.launch
 @Composable
 fun PantallaFavoritos(navController: NavController) {
     val context = LocalContext.current
-    val dao = PlantaRepository.obtenerDao(context)
+    val favoritoDao = PlantaRepository.obtenerFavoritoDao(context)
+    val userPreferences = UserPreferences(context)
 
     var plantasFavoritas by remember { mutableStateOf<List<Planta>>(emptyList()) }
     var textoBusqueda by remember { mutableStateOf("") }
+    
+    val correoLogueado by userPreferences.correoLogueado.collectAsState(initial = null)
 
-    // Ejecuta la búsqueda inicial o reactiva cuando cambie textoBusqueda
-    LaunchedEffect(textoBusqueda) {
-        delay(300) // Debounce para no saturar SQLite
-        plantasFavoritas = if (textoBusqueda.isBlank()) {
-            dao.obtenerFavoritas()
-        } else {
-            dao.buscarFavoritas(textoBusqueda)
+    LaunchedEffect(textoBusqueda, correoLogueado) {
+        correoLogueado?.let { correo ->
+            delay(300)
+            plantasFavoritas = if (textoBusqueda.isBlank()) {
+                favoritoDao.obtenerFavoritasDeUsuario(correo)
+            } else {
+                favoritoDao.buscarFavoritasDeUsuario(correo, textoBusqueda)
+            }
         }
     }
 
